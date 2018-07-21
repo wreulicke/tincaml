@@ -3,7 +3,6 @@ package interpreter
 import (
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/wreulicke/tincaml/ast"
 )
@@ -25,7 +24,6 @@ func (env Env) Clone() Env {
 func Evaluate(tree *ast.Tree) error {
 	env := NewEnv()
 	for _, n := range tree.Body {
-		fmt.Println(reflect.TypeOf(n), n)
 		value, err := EvaluateExpression(n, env)
 		if err != nil {
 			return err
@@ -35,7 +33,7 @@ func Evaluate(tree *ast.Tree) error {
 	return nil
 }
 
-func EvaluateExpression(v ast.AST, env Env) (interface{}, error) {
+func EvaluateExpression(v ast.AST, env Env) (interface{}, error) { // TODO 値の持ち方を内部表現に変えたい
 	switch node := v.(type) {
 	case *ast.AdditionExpressionNode:
 		return evaluateAddition(node, env)
