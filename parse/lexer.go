@@ -327,6 +327,12 @@ retry:
 			return TRUE
 		} else if text == "let" {
 			return LET
+		} else if text == "if" {
+			return IF
+		} else if text == "then" {
+			return THEN
+		} else if text == "else" {
+			return ELSE
 		}
 		return ID
 	}

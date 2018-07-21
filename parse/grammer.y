@@ -16,14 +16,16 @@ import "github.com/wreulicke/tincaml/ast"
 
 %type<> start
 %type<exprs> statements arguments
-%type<expr> statement expression unary_expression fn_call fn_declare
+%type<expr> statement expression unary_expression fn_call fn_declare if_expr
 %type<ast> primary_expression
 %type<params> params
 %token<token> NUMBER TRUE FALSE STRING ID
-%token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT BEGIN_BLOCK END_BLOCK LET
+%token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT BEGIN_BLOCK END_BLOCK
+%token<token> LET IF THEN ELSE
 %token<token> COLON
 
 %nonassoc COLON
+%right prec_if
 %left EQUALITY NOT_EQUALITY ASSIGN
 %left MINUS PLUS
 %left MULTI DIVIDE
@@ -55,6 +57,9 @@ statements:
 
 statement: 
     expression {
+        $$ = $1
+    }
+    | if_expr %prec prec_if {
         $$ = $1
     }
 
@@ -127,6 +132,15 @@ unary_expression:
         $$ = &ast.NotExpressionNode{$2}
     }
 
+if_expr:
+    IF expression THEN statements ELSE statements {
+        $$ = &ast.IfExpressionNode{
+            Cond: $2,
+            Then: $4,
+            Else: $6,
+        }
+    }
+
 fn_call: 
     ID '(' arguments ')' {
         $$ = &ast.FunctionCall{
@@ -192,6 +206,9 @@ primary_expression:
         $$ = &ast.NumberNode{Value: num}
     }
     | STRING {
-        $$ = &ast.StringNode{Value: $1.literal}
+        $$ = &ast.StringNode{$1.literal}
+    }
+    | ID {
+        $$ = &ast.Identifier{ ast.ID($1.literal) }
     }
 %%

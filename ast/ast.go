@@ -1,7 +1,6 @@
 package ast
 
 type NumberNode struct {
-	Raw   string
 	Value float64
 }
 
@@ -76,6 +75,12 @@ type NotEqualityExpressionNode struct {
 
 type NotExpressionNode struct {
 	Node AST
+}
+
+type IfExpressionNode struct {
+	Cond AST
+	Then []AST
+	Else []AST
 }
 
 type AST interface {

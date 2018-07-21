@@ -58,9 +58,43 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) {
 	case *ast.FunctionNode:
 		env[string(node.ID)] = node
 		return node, nil
+	case *ast.Identifier:
+		v, ok := env[string(node.ID)]
+		if !ok {
+			return nil, fmt.Errorf("'%s' is not found", string(node.ID))
+		}
+		return v, nil
+	case *ast.IfExpressionNode:
+		return evaluateIf(node, env)
 	default:
 		return nil, errors.New("Unexpected condition. cannot evaluate this node")
 	}
+}
+
+func evaluateBodies(exprs []ast.AST, env Env) (interface{}, error) {
+	var val interface{}
+	var err error
+	for _, expr := range exprs {
+		val, err = EvaluateExpression(expr, env)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return val, err
+}
+
+func evaluateIf(node *ast.IfExpressionNode, env Env) (interface{}, error) {
+	b, err := EvaluateExpression(node.Cond, env)
+	if err != nil {
+		return nil, err
+	}
+	if v, ok := b.(bool); ok {
+		if v {
+			return evaluateBodies(node.Then, env)
+		}
+		return evaluateBodies(node.Else, env)
+	}
+	return nil, errors.New("Condition is not boolean")
 }
 
 func evaluateFunctionCall(node *ast.FunctionCall, parentEnv Env) (interface{}, error) {
@@ -84,15 +118,7 @@ func evaluateFunctionCall(node *ast.FunctionCall, parentEnv Env) (interface{}, e
 		}
 		functionEnv[string(id.ID)] = arg
 	}
-	var val interface{}
-	var err error
-	for _, expr := range f.Body {
-		val, err = EvaluateExpression(expr, functionEnv)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return val, err
+	return evaluateBodies(f.Body, functionEnv)
 }
 
 func evaluateMultiplicative(node *ast.MultiplicativeExpressionNode, env Env) (interface{}, error) {
