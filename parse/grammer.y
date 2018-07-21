@@ -13,50 +13,54 @@ import "github.com/wreulicke/tincaml/ast"
     token   Token
 }
 
-%type<tree> start
-%type<exprs> expressions
-%type<expr> expression
-%type<ast> number_literal primary_expression term
+%type<> start
+%type<exprs> statements
+%type<expr> statement expression unary_expression
+%type<ast> primary_expression
 %token<token> NUMBER TRUE FALSE STRING
 %token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT
 %token<token> COLON
 
-%left PLUS MINUS 
+%nonassoc COLON
+%left EQUALITY NOT_EQUALITY ASSIGN
+%left MINUS PLUS
 %left MULTI DIVIDE
-%left EQUALITY ASSIGN
-%right unary_minus
-%right unary_not
+%right UMINUS UNOT
 
 %start start
 
 %%
 
-start: expressions { 
+start: statements { 
     tree := &ast.Tree{$1}
     yylex.(*Lexer).result = tree
-    $$ = tree
 }
 
-expressions: 
-    expression expressions {
-        values := make([]ast.AST, 0, len($2) + 1)
-        values = append(values, $1)
-        values = append(values, $2...)
-        $$ = values
-    }
-    | expression COLON expressions {
+statements: 
+    statement COLON statements {
         values := make([]ast.AST, 0, len($3) + 1)
         values = append(values, $1)
         values = append(values, $3...)
         $$ = values
     }
-    | expression {
+    | statement {
         $$ = []ast.AST{$1}
     } 
      
 
+statement: 
+    expression {
+        $$ = $1
+    }
+
 expression: 
-    expression PLUS expression {
+    unary_expression %prec UMINUS {
+        $$ = $1
+    }
+    | '(' expression ')' {
+        $$ = $2
+    }
+    | expression PLUS expression {
         $$ = &ast.AdditionExpressionNode{
             Left: $1,
             Right: $3,
@@ -96,24 +100,21 @@ expression:
             Right: $3,
         }
     }
-    | MINUS expression %prec unary_minus {
+    | primary_expression {
+      $$ = $1
+    }
+
+unary_expression:
+    MINUS expression %prec UMINUS {
         $$ = &ast.AdditionExpressionNode{
             Left: &ast.NumberNode{Value: 0},
             Right: $2,
             Operator: ast.MINUS,
         }
     }
-    | NOT expression %prec unary_not {
+    | NOT expression %prec UNOT {
         $$ = &ast.NotExpressionNode{$2}
     }
-    | term {
-      $$ = $1
-    }
-    
-term: 
-   primary_expression {
-      $$ = $1
-   }
 
 primary_expression: 
     FALSE {
@@ -122,18 +123,12 @@ primary_expression:
     | TRUE {
         $$ = &ast.BooleanNode{Value: true}
     }
-    | number_literal {
-        $$ = $1
-    }
-    | STRING {
-        $$ = &ast.StringNode{Value: $1.literal}
-    }
-
-number_literal: 
-    NUMBER {
+    | NUMBER {
         lex := yylex.(*Lexer)
         num := lex.parseFloat($1.literal)
         $$ = &ast.NumberNode{Value: num}
     }
-
+    | STRING {
+        $$ = &ast.StringNode{Value: $1.literal}
+    }
 %%

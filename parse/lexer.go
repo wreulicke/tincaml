@@ -277,6 +277,7 @@ retry:
 		}
 		return NOT
 	case next == ';':
+		l.scanWhitespace()
 		return COLON
 	case next == '-':
 		return MINUS
@@ -286,6 +287,17 @@ retry:
 		return DIVIDE
 	case next == '*':
 		return MULTI
+	case next == '(':
+		return int(next)
+	case next == ')':
+		return int(next)
+	case next == '\n':
+		l.scanWhitespace()
+		if l.Peek() == ';' {
+			l.Skip()
+			return COLON
+		}
+		return COLON
 	default:
 		if unicode.IsSpace(next) {
 			l.scanWhitespace()
