@@ -149,6 +149,7 @@ func (l *Lexer) scanMultilineString() {
 	}
 }
 
+// TODO remove パーセントエンコーディング
 func (l *Lexer) scanString(start rune) {
 	for {
 		next := l.Peek()
