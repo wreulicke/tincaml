@@ -83,6 +83,21 @@ type IfExpressionNode struct {
 	Else []AST
 }
 
+type RelationalOperator int
+
+const (
+	LESS = iota
+	GREATER
+	LESS_EQUAL
+	GREATER_EQUAL
+)
+
+type RelationalExpressionNode struct {
+	Left     AST
+	Right    AST
+	Operator RelationalOperator
+}
+
 type AST interface {
 }
 

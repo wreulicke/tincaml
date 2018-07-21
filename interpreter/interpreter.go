@@ -53,6 +53,8 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) {
 		return node.Value, nil
 	case *ast.StringNode:
 		return node.Value, nil
+	case *ast.RelationalExpressionNode:
+		return evaluateRelational(node, env)
 	case *ast.FunctionCall:
 		return evaluateFunctionCall(node, env)
 	case *ast.FunctionNode:
@@ -69,6 +71,33 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) {
 	default:
 		return nil, errors.New("Unexpected condition. cannot evaluate this node")
 	}
+}
+
+func evaluateRelational(node *ast.RelationalExpressionNode, env Env) (interface{}, error) {
+	l, err := EvaluateExpression(node.Left, env)
+	if err != nil {
+		return nil, err
+	}
+	r, err := EvaluateExpression(node.Right, env)
+	if err != nil {
+		return nil, err
+	}
+	if lv, ok := l.(float64); ok {
+		if rv, ok := r.(float64); ok {
+			switch node.Operator {
+			case ast.LESS:
+				return lv < rv, nil
+			case ast.GREATER:
+				return lv > rv, nil
+			case ast.LESS_EQUAL:
+				return lv >= rv, nil
+			case ast.GREATER_EQUAL:
+				return lv >= rv, nil
+			}
+		}
+		return nil, errors.New("right value is not number")
+	}
+	return nil, errors.New("left value is not number")
 }
 
 func evaluateBodies(exprs []ast.AST, env Env) (interface{}, error) {

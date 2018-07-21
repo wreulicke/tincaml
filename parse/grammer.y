@@ -16,17 +16,20 @@ import "github.com/wreulicke/tincaml/ast"
 
 %type<> start
 %type<exprs> statements arguments
-%type<expr> statement expression unary_expression fn_call fn_declare if_expr
+%type<expr> statement expression unary_expression fn_call fn_declare if_expr relational_expr
 %type<ast> primary_expression
 %type<params> params
 %token<token> NUMBER TRUE FALSE STRING ID
-%token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT BEGIN_BLOCK END_BLOCK
+%token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT
+%token<token> LESS GREATER LESS_EQUAL GREATER_EQUAL
+%token<token> BEGIN_BLOCK END_BLOCK
 %token<token> LET IF THEN ELSE
 %token<token> COLON
 
 %nonassoc COLON
 %right prec_if
 %left EQUALITY NOT_EQUALITY ASSIGN
+%left LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left MINUS PLUS
 %left MULTI DIVIDE
 %right UMINUS UNOT
@@ -91,6 +94,9 @@ expression:
             Operator: ast.MULTI,
         }
     }
+    | relational_expr {
+        $$ = $1
+    }
     | expression DIVIDE expression {
         $$ = &ast.MultiplicativeExpressionNode{
             Left: $1,
@@ -118,6 +124,36 @@ expression:
     }
     | primary_expression {
       $$ = $1
+    }
+
+relational_expr:
+    expression LESS expression { 
+        $$ = &ast.RelationalExpressionNode{
+            Left: $1, 
+            Right: $3,
+            Operator: ast.LESS,
+        } 
+    }
+    | expression GREATER expression { 
+        $$ = &ast.RelationalExpressionNode{
+            Left: $1, 
+            Right: $3,
+            Operator: ast.GREATER,
+        } 
+    }
+    | expression LESS_EQUAL expression { 
+        $$ = &ast.RelationalExpressionNode{
+            Left: $1, 
+            Right: $3,
+            Operator: ast.LESS_EQUAL,
+        } 
+    }
+    | expression GREATER_EQUAL expression { 
+        $$ = &ast.RelationalExpressionNode{
+            Left: $1, 
+            Right: $3,
+            Operator: ast.GREATER_EQUAL,
+        } 
     }
 
 unary_expression:

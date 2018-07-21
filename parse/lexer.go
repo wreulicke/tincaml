@@ -287,6 +287,18 @@ retry:
 		return MINUS
 	case next == ',':
 		return int(',')
+	case next == '<':
+		if l.Peek() == '=' {
+			l.Next()
+			return LESS_EQUAL
+		}
+		return LESS
+	case next == '>':
+		if l.Peek() == '=' {
+			l.Next()
+			return GREATER_EQUAL
+		}
+		return GREATER
 	case next == '{':
 		return BEGIN_BLOCK
 	case next == '}':
