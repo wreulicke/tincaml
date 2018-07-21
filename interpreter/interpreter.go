@@ -8,10 +8,25 @@ import (
 	"github.com/wreulicke/tincaml/ast"
 )
 
+type Env map[string]interface{}
+
+func NewEnv() Env {
+	return Env{}
+}
+
+func (env Env) Clone() Env {
+	newEnv := Env{}
+	for k, v := range env {
+		newEnv[k] = v
+	}
+	return newEnv
+}
+
 func Evaluate(tree *ast.Tree) error {
+	env := NewEnv()
 	for _, n := range tree.Body {
 		fmt.Println(reflect.TypeOf(n), n)
-		value, err := EvaluateExpression(n)
+		value, err := EvaluateExpression(n, env)
 		if err != nil {
 			return err
 		}
@@ -20,35 +35,72 @@ func Evaluate(tree *ast.Tree) error {
 	return nil
 }
 
-func EvaluateExpression(v ast.AST) (interface{}, error) {
+func EvaluateExpression(v ast.AST, env Env) (interface{}, error) {
 	switch node := v.(type) {
 	case *ast.AdditionExpressionNode:
-		return evaluateAddition(node)
+		return evaluateAddition(node, env)
 	case *ast.MultiplicativeExpressionNode:
-		return evaluateMultiplicative(node)
+		return evaluateMultiplicative(node, env)
 	case *ast.EqualityExpressionNode:
-		return evaluateEqual(node)
+		return evaluateEqual(node, env)
 	case *ast.NotEqualityExpressionNode:
-		return evaluateNotEqual(node)
+		return evaluateNotEqual(node, env)
 	case *ast.NotExpressionNode:
-		return evaluateNot(node)
+		return evaluateNot(node, env)
 	case *ast.BooleanNode:
 		return node.Value, nil
 	case *ast.NumberNode:
 		return node.Value, nil
 	case *ast.StringNode:
 		return node.Value, nil
+	case *ast.FunctionCall:
+		return evaluateFunctionCall(node, env)
+	case *ast.FunctionNode:
+		env[string(node.ID)] = node
+		return node, nil
 	default:
 		return nil, errors.New("Unexpected condition. cannot evaluate this node")
 	}
 }
 
-func evaluateMultiplicative(node *ast.MultiplicativeExpressionNode) (interface{}, error) {
-	l, err := EvaluateExpression(node.Left)
+func evaluateFunctionCall(node *ast.FunctionCall, parentEnv Env) (interface{}, error) {
+	v, ok := parentEnv[string(node.ID)]
+	if !ok {
+		return nil, fmt.Errorf("function: '%s' is not found", string(node.ID))
+	}
+	f, ok := v.(*ast.FunctionNode)
+	if !ok {
+		return nil, fmt.Errorf("'%s' is not function", string(node.ID))
+	}
+	if len(f.Params) != len(node.Args) {
+		return nil, fmt.Errorf("size of parameters is expected to %d. but size of arguments is %d", len(f.Params), len(node.Args))
+	}
+	functionEnv := parentEnv.Clone()
+	for k, v := range node.Args {
+		id := f.Params[k]
+		arg, err := EvaluateExpression(v, parentEnv)
+		if err != nil {
+			return nil, err
+		}
+		functionEnv[string(id.ID)] = arg
+	}
+	var val interface{}
+	var err error
+	for _, expr := range f.Body {
+		val, err = EvaluateExpression(expr, functionEnv)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return val, err
+}
+
+func evaluateMultiplicative(node *ast.MultiplicativeExpressionNode, env Env) (interface{}, error) {
+	l, err := EvaluateExpression(node.Left, env)
 	if err != nil {
 		return nil, err
 	}
-	r, err := EvaluateExpression(node.Right)
+	r, err := EvaluateExpression(node.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +118,12 @@ func evaluateMultiplicative(node *ast.MultiplicativeExpressionNode) (interface{}
 	return nil, errors.New("left value is not number")
 }
 
-func evaluateAddition(node *ast.AdditionExpressionNode) (interface{}, error) {
-	l, err := EvaluateExpression(node.Left)
+func evaluateAddition(node *ast.AdditionExpressionNode, env Env) (interface{}, error) {
+	l, err := EvaluateExpression(node.Left, env)
 	if err != nil {
 		return nil, err
 	}
-	r, err := EvaluateExpression(node.Right)
+	r, err := EvaluateExpression(node.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -99,12 +151,12 @@ func evaluateAddition(node *ast.AdditionExpressionNode) (interface{}, error) {
 	return nil, errors.New("Runtime Error. unexpected type")
 }
 
-func evaluateNotEqual(node *ast.NotEqualityExpressionNode) (interface{}, error) {
-	l, err := EvaluateExpression(node.Left)
+func evaluateNotEqual(node *ast.NotEqualityExpressionNode, env Env) (interface{}, error) {
+	l, err := EvaluateExpression(node.Left, env)
 	if err != nil {
 		return nil, err
 	}
-	r, err := EvaluateExpression(node.Right)
+	r, err := EvaluateExpression(node.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -112,8 +164,8 @@ func evaluateNotEqual(node *ast.NotEqualityExpressionNode) (interface{}, error) 
 	return !b, err
 }
 
-func evaluateNot(node *ast.NotExpressionNode) (interface{}, error) {
-	e, err := EvaluateExpression(node.Node)
+func evaluateNot(node *ast.NotExpressionNode, env Env) (interface{}, error) {
+	e, err := EvaluateExpression(node.Node, env)
 	if err != nil {
 		return nil, err
 	}
@@ -123,12 +175,12 @@ func evaluateNot(node *ast.NotExpressionNode) (interface{}, error) {
 	return nil, errors.New("Runtime Error. unexpected type")
 }
 
-func evaluateEqual(node *ast.EqualityExpressionNode) (interface{}, error) {
-	l, err := EvaluateExpression(node.Left)
+func evaluateEqual(node *ast.EqualityExpressionNode, env Env) (interface{}, error) {
+	l, err := EvaluateExpression(node.Left, env)
 	if err != nil {
 		return nil, err
 	}
-	r, err := EvaluateExpression(node.Right)
+	r, err := EvaluateExpression(node.Right, env)
 	if err != nil {
 		return nil, err
 	}

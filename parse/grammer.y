@@ -10,15 +10,17 @@ import "github.com/wreulicke/tincaml/ast"
     ast     ast.AST
     expr    ast.AST
     exprs    []ast.AST
+    params  []ast.Identifier
     token   Token
 }
 
 %type<> start
-%type<exprs> statements
-%type<expr> statement expression unary_expression
+%type<exprs> statements arguments
+%type<expr> statement expression unary_expression fn_call fn_declare
 %type<ast> primary_expression
-%token<token> NUMBER TRUE FALSE STRING
-%token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT
+%type<params> params
+%token<token> NUMBER TRUE FALSE STRING ID
+%token<token> MINUS PLUS MULTI DIVIDE ASSIGN EQUALITY NOT_EQUALITY NOT BEGIN_BLOCK END_BLOCK LET
 %token<token> COLON
 
 %nonassoc COLON
@@ -43,6 +45,9 @@ statements:
         values = append(values, $3...)
         $$ = values
     }
+    | statement COLON {
+        $$ = []ast.AST{$1}
+    } 
     | statement {
         $$ = []ast.AST{$1}
     } 
@@ -100,6 +105,12 @@ expression:
             Right: $3,
         }
     }
+    | fn_call {
+        $$ = $1
+    }
+    | fn_declare {
+        $$ = $1
+    }
     | primary_expression {
       $$ = $1
     }
@@ -114,6 +125,58 @@ unary_expression:
     }
     | NOT expression %prec UNOT {
         $$ = &ast.NotExpressionNode{$2}
+    }
+
+fn_call: 
+    ID '(' arguments ')' {
+        $$ = &ast.FunctionCall{
+            ID: ast.ID($1.literal),
+            Args: $3,
+        }   
+    }
+    | ID '(' ')' {
+        $$ = &ast.FunctionCall{
+            ID: ast.ID($1.literal),
+            Args: []ast.AST{},
+        }  
+    }
+
+arguments: 
+    expression ',' arguments {  
+        values := make([]ast.AST, 0, len($3) + 1)
+        values = append(values, $1)
+        values = append(values, $3...)
+        $$ = values 
+    }
+    | expression { 
+        $$ = []ast.AST{ $1 } 
+    }
+
+fn_declare: 
+    LET ID params BEGIN_BLOCK statements END_BLOCK {
+        $$ = &ast.FunctionNode{
+            ID: ast.ID($2.literal),
+            Params: $3,
+            Body: $5,
+        }
+    }
+    | LET ID BEGIN_BLOCK statements END_BLOCK {
+        $$ = &ast.FunctionNode{
+            ID: ast.ID($2.literal),
+            Params: []ast.Identifier{},
+            Body: $4,
+        }
+    }
+
+params: 
+    ID params {
+        values := make([]ast.Identifier, 0, len($2) + 1)
+        values = append(values, ast.Identifier{ ast.ID($1.literal) })
+        values = append(values, $2...)
+        $$ = values
+    }
+    | ID { 
+        $$ = []ast.Identifier{ ast.Identifier{ ast.ID($1.literal) } } 
     }
 
 primary_expression: 

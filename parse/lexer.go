@@ -19,6 +19,10 @@ type Token struct {
 	literal string
 }
 
+func (token Token) String() string {
+	return string(token.typ) + ":" + token.literal
+}
+
 type Position struct {
 	line   int
 	column int
@@ -121,7 +125,7 @@ func (l *Lexer) scanIdentifier() {
 	next := l.Peek()
 	if unicode.IsLetter(next) || next == '$' || next == '_' {
 	} else {
-		l.Error("expected identifier")
+		return
 	}
 
 	for next = l.Peek(); isIdentifierPart(next); {
@@ -281,6 +285,12 @@ retry:
 		return COLON
 	case next == '-':
 		return MINUS
+	case next == ',':
+		return int(',')
+	case next == '{':
+		return BEGIN_BLOCK
+	case next == '}':
+		return END_BLOCK
 	case next == '+':
 		return PLUS
 	case next == '/':
@@ -315,8 +325,10 @@ retry:
 			return FALSE
 		} else if text == "true" {
 			return TRUE
+		} else if text == "let" {
+			return LET
 		}
-		panic("aaaaa")
+		return ID
 	}
 }
 

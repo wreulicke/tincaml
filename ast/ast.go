@@ -15,13 +15,23 @@ type BooleanNode struct {
 
 type ID string
 
+type Identifier struct {
+	ID ID
+}
+
 type ArrayNode struct {
 	Value []AST
 }
 
-type FunctionNode struct {
+type FunctionCall struct {
 	ID   ID
-	Body []AST
+	Args []AST
+}
+
+type FunctionNode struct {
+	ID     ID
+	Params []Identifier
+	Body   []AST
 }
 
 type AdditionOperator int
