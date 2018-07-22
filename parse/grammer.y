@@ -47,15 +47,12 @@ start: statements {
 }
 
 statements: 
-    statement SEMICOLON statements {
-        values := make([]ast.AST, 0, len($3) + 1)
+    statement statements {
+        values := make([]ast.AST, 0, len($2) + 1)
         values = append(values, $1)
-        values = append(values, $3...)
+        values = append(values, $2...)
         $$ = values
     }
-    | statement SEMICOLON {
-        $$ = []ast.AST{$1}
-    } 
     | statement {
         $$ = []ast.AST{$1}
     } 
@@ -65,12 +62,16 @@ statement:
     expression {
         $$ = $1
     }
-    | if_expr %prec prec_if {
-        $$ = $1
+    | SEMICOLON expression {
+        $$ = $2
     }
+
 
 expression: 
     unary_expression %prec UMINUS {
+        $$ = $1
+    }
+    | if_expr %prec prec_if {
         $$ = $1
     }
     | expression PLUS expression {
@@ -181,15 +182,15 @@ if_expr:
     }
 
 fn_call: 
-    ID '(' ')' {
+    expression '(' ')' {
         $$ = &ast.FunctionCall{
-            ID: ast.ID($1.literal),
+            Function: $1,
             Args: []ast.AST{},
         }  
     }
-    | ID '(' arguments ')' {
+    | expression '(' arguments ')' {
         $$ = &ast.FunctionCall{
-            ID: ast.ID($1.literal),
+            Function: $1,
             Args: $3,
         }   
     }

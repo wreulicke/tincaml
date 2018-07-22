@@ -314,13 +314,6 @@ retry:
 		return int(next)
 	case next == ')':
 		return int(next)
-	case next == '\n':
-		l.scanWhitespace()
-		if l.Peek() == ';' {
-			l.Skip()
-			return SEMICOLON
-		}
-		return SEMICOLON
 	default:
 		if unicode.IsSpace(next) {
 			l.scanWhitespace()

@@ -17,11 +17,14 @@
 "吉幾三" != "吉野家"
 !true
 !false
-
-let f n { 
-  if n < 2 then n
-  else f (n - 2) + f (n - 1)
+let f { 
+  let f n { 
+    if n < 2 then n else f (n - 2) + f (n - 1)
+  }
 }
-f(10)
+
+;let fib = f
+fib()(2)
+
 let b = 2
 let a = b + 3

@@ -9,6 +9,11 @@ import (
 
 type Env map[string]interface{}
 
+type Closure struct {
+	Env      Env
+	Function *ast.FunctionNode
+}
+
 func NewEnv() Env {
 	return Env{}
 }
@@ -24,6 +29,7 @@ func (env Env) Clone() Env {
 func Evaluate(tree *ast.Tree) error {
 	env := NewEnv()
 	for _, n := range tree.Body {
+		fmt.Println(n)
 		value, err := EvaluateExpression(n, env)
 		if err != nil {
 			return err
@@ -56,8 +62,12 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) { // TODO ÂÄ§„Å
 	case *ast.FunctionCall:
 		return evaluateFunctionCall(node, env)
 	case *ast.FunctionNode:
-		env[string(node.ID)] = node
-		return node, nil
+		c := &Closure{
+			Function: node,
+		}
+		env[string(node.ID)] = c
+		c.Env = env.Clone()
+		return c, nil
 	case *ast.NegativeNode:
 		return evaluateNegative(node, env)
 	case *ast.Identifier:
@@ -70,6 +80,8 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) { // TODO ÂÄ§„Å
 		return evaluateIf(node, env)
 	case *ast.AssignmentExpressionNode:
 		return evaluateAssignment(node, env)
+	case *ast.EmptyExpressionNode:
+		return nil, nil
 	default:
 		return nil, errors.New("Unexpected condition. cannot evaluate this node")
 	}
@@ -81,7 +93,7 @@ func evaluateNegative(node *ast.NegativeNode, env Env) (interface{}, error) {
 		return nil, err
 	}
 	if f, ok := v.(float64); ok {
-		return f, nil
+		return -f, nil
 	}
 	return nil, errors.New("node is not number")
 }
@@ -148,28 +160,45 @@ func evaluateIf(node *ast.IfExpressionNode, env Env) (interface{}, error) {
 	return nil, errors.New("Condition is not boolean")
 }
 
-func evaluateFunctionCall(node *ast.FunctionCall, parentEnv Env) (interface{}, error) {
-	v, ok := parentEnv[string(node.ID)]
-	if !ok {
-		return nil, fmt.Errorf("function: '%s' is not found", string(node.ID))
-	}
-	f, ok := v.(*ast.FunctionNode)
-	if !ok {
-		return nil, fmt.Errorf("'%s' is not function", string(node.ID))
-	}
-	if len(f.Params) != len(node.Args) {
-		return nil, fmt.Errorf("size of parameters is expected to %d. but size of arguments is %d", len(f.Params), len(node.Args))
+func evaluateClosure(node *Closure, args []ast.AST, parentEnv Env) (interface{}, error) {
+	if len(node.Function.Params) != len(args) {
+		return nil, fmt.Errorf("size of parameters is expected to %d. but size of arguments is %d", len(node.Function.Params), len(args))
 	}
 	functionEnv := parentEnv.Clone()
-	for k, v := range node.Args {
-		id := f.Params[k]
+	for k, v := range node.Env {
+		functionEnv[k] = v
+	}
+	for k, v := range args {
+		id := node.Function.Params[k]
 		arg, err := EvaluateExpression(v, parentEnv)
 		if err != nil {
 			return nil, err
 		}
 		functionEnv[string(id.ID)] = arg
 	}
-	return evaluateBodies(f.Body, functionEnv)
+	r, err := evaluateBodies(node.Function.Body, functionEnv)
+	if err != nil {
+		return nil, err
+	}
+	if f, ok := r.(*ast.FunctionNode); ok {
+		return Closure{
+			Env:      functionEnv,
+			Function: f,
+		}, nil
+	}
+	return r, nil
+}
+
+func evaluateFunctionCall(node *ast.FunctionCall, parentEnv Env) (interface{}, error) {
+	v, error := EvaluateExpression(node.Function, parentEnv)
+	if error != nil {
+		return nil, error
+	}
+	f, ok := v.(*Closure)
+	if !ok {
+		return nil, fmt.Errorf("node is not function. found: %v", v)
+	}
+	return evaluateClosure(f, node.Args, parentEnv)
 }
 
 func evaluateMultiplicative(node *ast.MultiplicativeExpressionNode, env Env) (interface{}, error) {

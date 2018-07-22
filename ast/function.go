@@ -3,12 +3,12 @@ package ast
 import "fmt"
 
 type FunctionCall struct {
-	ID   ID
-	Args []AST
+	Function AST
+	Args     []AST
 }
 
 func (n FunctionCall) String() string {
-	return fmt.Sprintf("FunctionCall{ID: %s, Args: %v}", string(n.ID), n.Args)
+	return fmt.Sprintf("FunctionCall{Function: %s, Args: %v}", n.Function, n.Args)
 }
 
 type FunctionNode struct {

@@ -15,6 +15,13 @@ func (n NegativeNode) String() string {
 	return fmt.Sprintf("NegativeNode(%v)", n.Node)
 }
 
+type EmptyExpressionNode struct {
+}
+
+func (n EmptyExpressionNode) String() string {
+	return "EmptyExpressionNode"
+}
+
 type AdditionOperator int
 
 const (
