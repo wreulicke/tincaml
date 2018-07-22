@@ -1,36 +1,18 @@
 package ast
 
-type NumberNode struct {
-	Value float64
-}
-
-type StringNode struct {
-	Value string
-}
-
-type BooleanNode struct {
-	Value bool
-}
-
-type ID string
-
-type Identifier struct {
-	ID ID
-}
+import (
+	"fmt"
+)
 
 type ArrayNode struct {
 	Value []AST
 }
-
-type FunctionCall struct {
-	ID   ID
-	Args []AST
+type NegativeNode struct {
+	Node AST
 }
 
-type FunctionNode struct {
-	ID     ID
-	Params []Identifier
-	Body   []AST
+func (n NegativeNode) String() string {
+	return fmt.Sprintf("NegativeNode(%v)", n.Node)
 }
 
 type AdditionOperator int
@@ -48,6 +30,16 @@ type AdditionExpressionNode struct {
 	Operator AdditionOperator
 }
 
+func (n AdditionExpressionNode) String() string {
+	switch n.Operator {
+	case PLUS:
+		return fmt.Sprintf("AdditionExpressionNode(%v + %v)", n.Left, n.Right)
+	case MINUS:
+		return fmt.Sprintf("AdditionExpressionNode(%v - %v)", n.Left, n.Right)
+	}
+	panic("cannot reach here")
+}
+
 type MultiplicativeOperator int
 
 const (
@@ -63,9 +55,23 @@ type MultiplicativeExpressionNode struct {
 	Operator MultiplicativeOperator
 }
 
+func (n MultiplicativeExpressionNode) String() string {
+	switch n.Operator {
+	case MULTI:
+		return fmt.Sprintf("MultiplicativeExpressionNode(%v * %v)", n.Left, n.Right)
+	case DIVIDE:
+		return fmt.Sprintf("MultiplicativeExpressionNode(%v / %v)", n.Left, n.Right)
+	}
+	panic("cannot reach here")
+}
+
 type EqualityExpressionNode struct {
 	Left  AST
 	Right AST
+}
+
+func (n EqualityExpressionNode) String() string {
+	return fmt.Sprintf("EqualityExpressionNode(%v == %v)", n.Left, n.Right)
 }
 
 type NotEqualityExpressionNode struct {
@@ -73,14 +79,26 @@ type NotEqualityExpressionNode struct {
 	Right AST
 }
 
+func (n NotEqualityExpressionNode) String() string {
+	return fmt.Sprintf("NotEqualityExpressionNode(%v != %v)", n.Left, n.Right)
+}
+
 type NotExpressionNode struct {
 	Node AST
+}
+
+func (n NotExpressionNode) String() string {
+	return fmt.Sprintf("NotExpressionNode(%v)", n.Node)
 }
 
 type IfExpressionNode struct {
 	Cond AST
 	Then []AST
 	Else []AST
+}
+
+func (n IfExpressionNode) String() string {
+	return fmt.Sprintf("IfExpressionNode(Cond: %v, Then: %v, Else: %v)", n.Cond, n.Then, n.Else)
 }
 
 type RelationalOperator int
@@ -98,7 +116,31 @@ type RelationalExpressionNode struct {
 	Operator RelationalOperator
 }
 
+func (n RelationalExpressionNode) String() string {
+	switch n.Operator {
+	case LESS:
+		return fmt.Sprintf("RelationalExpressionNode(%v < %v)", n.Left, n.Right)
+	case GREATER:
+		return fmt.Sprintf("RelationalExpressionNode(%v > %v)", n.Left, n.Right)
+	case LESS_EQUAL:
+		return fmt.Sprintf("RelationalExpressionNode(%v <= %v)", n.Left, n.Right)
+	case GREATER_EQUAL:
+		return fmt.Sprintf("RelationalExpressionNode(%v >= %v)", n.Left, n.Right)
+	}
+	panic("cannot reach here")
+}
+
+type AssignmentExpressionNode struct {
+	ID          ID
+	Initializer AST
+}
+
+func (n AssignmentExpressionNode) String() string {
+	return fmt.Sprintf("AssignmentExpressionNode(%s = %v)", string(n.ID), n.Initializer)
+}
+
 type AST interface {
+	String() string
 }
 
 type Tree struct {

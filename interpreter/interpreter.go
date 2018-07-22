@@ -58,6 +58,8 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) { // TODO ÂÄ§„Å
 	case *ast.FunctionNode:
 		env[string(node.ID)] = node
 		return node, nil
+	case *ast.NegativeNode:
+		return evaluateNegative(node, env)
 	case *ast.Identifier:
 		v, ok := env[string(node.ID)]
 		if !ok {
@@ -66,9 +68,31 @@ func EvaluateExpression(v ast.AST, env Env) (interface{}, error) { // TODO ÂÄ§„Å
 		return v, nil
 	case *ast.IfExpressionNode:
 		return evaluateIf(node, env)
+	case *ast.AssignmentExpressionNode:
+		return evaluateAssignment(node, env)
 	default:
 		return nil, errors.New("Unexpected condition. cannot evaluate this node")
 	}
+}
+
+func evaluateNegative(node *ast.NegativeNode, env Env) (interface{}, error) {
+	v, err := EvaluateExpression(node.Node, env)
+	if err != nil {
+		return nil, err
+	}
+	if f, ok := v.(float64); ok {
+		return f, nil
+	}
+	return nil, errors.New("node is not number")
+}
+
+func evaluateAssignment(node *ast.AssignmentExpressionNode, env Env) (interface{}, error) {
+	v, err := EvaluateExpression(node.Initializer, env)
+	if err != nil {
+		return nil, err
+	}
+	env[string(node.ID)] = v
+	return v, nil
 }
 
 func evaluateRelational(node *ast.RelationalExpressionNode, env Env) (interface{}, error) {

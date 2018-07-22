@@ -283,7 +283,7 @@ retry:
 		return NOT
 	case next == ';':
 		l.scanWhitespace()
-		return COLON
+		return SEMICOLON
 	case next == '-':
 		return MINUS
 	case next == ',':
@@ -318,9 +318,9 @@ retry:
 		l.scanWhitespace()
 		if l.Peek() == ';' {
 			l.Skip()
-			return COLON
+			return SEMICOLON
 		}
-		return COLON
+		return SEMICOLON
 	default:
 		if unicode.IsSpace(next) {
 			l.scanWhitespace()

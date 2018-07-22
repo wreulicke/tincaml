@@ -42,10 +42,12 @@ const LET = 57365
 const IF = 57366
 const THEN = 57367
 const ELSE = 57368
-const COLON = 57369
-const prec_if = 57370
-const UMINUS = 57371
-const UNOT = 57372
+const SEMICOLON = 57369
+const prec_seq = 57370
+const prec_if = 57371
+const prec_fun = 57372
+const UMINUS = 57373
+const UNOT = 57374
 
 var yyToknames = [...]string{
 	"$end",
@@ -74,8 +76,10 @@ var yyToknames = [...]string{
 	"IF",
 	"THEN",
 	"ELSE",
-	"COLON",
+	"SEMICOLON",
+	"prec_seq",
 	"prec_if",
+	"prec_fun",
 	"UMINUS",
 	"UNOT",
 	"'('",
@@ -88,7 +92,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line grammer.y:250
+//line grammer.y:256
 
 //line yacctab:1
 var yyExca = [...]int{
@@ -99,76 +103,80 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 170
+const yyLast = 173
 
 var yyAct = [...]int{
 
-	4, 51, 54, 58, 36, 21, 63, 68, 32, 66,
-	60, 2, 56, 33, 34, 35, 23, 22, 24, 25,
-	37, 56, 11, 39, 40, 41, 42, 43, 44, 45,
-	46, 47, 48, 38, 55, 24, 25, 53, 8, 23,
-	22, 24, 25, 5, 26, 27, 10, 28, 29, 30,
-	31, 9, 6, 3, 1, 0, 0, 0, 0, 62,
-	53, 64, 57, 59, 0, 0, 0, 61, 23, 22,
-	24, 25, 65, 26, 27, 67, 28, 29, 30, 31,
-	19, 18, 17, 20, 15, 13, 0, 0, 0, 0,
-	0, 49, 14, 19, 18, 17, 20, 15, 13, 16,
-	0, 0, 0, 0, 0, 14, 0, 7, 52, 0,
-	0, 0, 16, 12, 19, 18, 17, 20, 15, 13,
-	7, 0, 0, 0, 0, 0, 14, 0, 0, 23,
-	22, 24, 25, 16, 26, 27, 0, 28, 29, 30,
-	31, 7, 0, 0, 0, 50, 23, 22, 24, 25,
-	0, 26, 27, 0, 28, 29, 30, 31, 23, 22,
-	24, 25, 0, 0, 0, 0, 28, 29, 30, 31,
+	4, 50, 55, 63, 36, 21, 67, 69, 66, 59,
+	24, 25, 2, 33, 34, 35, 52, 37, 23, 22,
+	24, 25, 32, 39, 40, 41, 42, 43, 44, 45,
+	46, 47, 48, 11, 38, 7, 5, 56, 23, 22,
+	24, 25, 9, 26, 27, 8, 28, 29, 30, 31,
+	58, 6, 3, 1, 61, 0, 0, 0, 0, 0,
+	0, 0, 0, 57, 60, 56, 62, 68, 23, 22,
+	24, 25, 65, 26, 27, 0, 28, 29, 30, 31,
+	70, 19, 18, 17, 20, 15, 13, 19, 18, 17,
+	20, 15, 13, 14, 64, 0, 52, 0, 0, 14,
+	10, 49, 0, 0, 0, 0, 10, 12, 0, 51,
+	16, 54, 0, 0, 0, 0, 16, 19, 18, 17,
+	20, 15, 13, 0, 0, 0, 0, 0, 0, 14,
+	0, 0, 23, 22, 24, 25, 10, 26, 27, 0,
+	28, 29, 30, 31, 0, 0, 16, 0, 53, 23,
+	22, 24, 25, 0, 26, 27, 0, 28, 29, 30,
+	31, 23, 22, 24, 25, 0, 0, 0, 0, 28,
+	29, 30, 31,
 }
 var yyPact = [...]int{
 
-	89, -1000, -1000, -22, 137, -1000, -1000, 110, -1000, -1000,
-	-1000, -1000, 110, 110, 110, -27, 12, -1000, -1000, -1000,
-	-1000, 89, 110, 110, 110, 110, 110, 110, 110, 110,
-	110, 110, 59, 120, -1000, -1000, 76, 13, -1000, 24,
-	24, -1000, -1000, 149, 149, 7, 7, 7, 7, -1000,
-	89, -29, -1000, 30, -11, 89, 4, -20, -1000, 110,
-	89, -13, -1000, 89, -1000, -15, -1000, -1000, -1000,
+	83, -1000, -1000, -22, 140, -1000, -1000, -1000, -1000, -1000,
+	14, -1000, 113, 113, 113, -29, 113, -1000, -1000, -1000,
+	-1000, 83, 113, 113, 113, 113, 113, 113, 113, 113,
+	113, 113, 88, 123, -1000, -1000, 77, 29, -1000, -1,
+	-1, -1000, -1000, 152, 152, 9, 9, 9, 9, 113,
+	-12, 83, 8, 83, -1000, -31, 59, -1000, 140, 83,
+	-14, -1000, -20, -1000, 113, -15, -1000, 83, -1000, -1000,
+	-1000,
 }
 var yyPgo = [...]int{
 
-	0, 54, 11, 1, 53, 0, 52, 51, 46, 43,
-	38, 22, 2,
+	0, 53, 12, 2, 52, 0, 51, 45, 42, 36,
+	35, 33, 1,
 }
 var yyR1 = [...]int{
 
 	0, 1, 2, 2, 2, 4, 4, 5, 5, 5,
 	5, 5, 5, 5, 5, 5, 5, 5, 5, 10,
 	10, 10, 10, 6, 6, 9, 7, 7, 3, 3,
-	8, 8, 12, 12, 11, 11, 11, 11, 11,
+	8, 8, 12, 12, 11, 11, 11, 11, 11, 11,
 }
 var yyR2 = [...]int{
 
 	0, 1, 3, 2, 1, 1, 1, 1, 3, 3,
-	3, 3, 1, 3, 3, 3, 1, 1, 1, 3,
-	3, 3, 3, 2, 2, 6, 4, 3, 3, 1,
-	6, 5, 2, 1, 1, 1, 1, 1, 1,
+	3, 1, 3, 3, 3, 1, 1, 4, 1, 3,
+	3, 3, 3, 2, 2, 6, 3, 4, 3, 1,
+	6, 5, 2, 1, 3, 1, 1, 1, 1, 1,
 }
 var yyChk = [...]int{
 
-	-1000, -1, -2, -4, -5, -9, -6, 31, -10, -7,
-	-8, -11, 24, 9, 16, 8, 23, 6, 5, 4,
+	-1000, -1, -2, -4, -5, -9, -6, -10, -7, -8,
+	23, -11, 24, 9, 16, 8, 33, 6, 5, 4,
 	7, 27, 10, 9, 11, 12, 14, 15, 17, 18,
-	19, 20, -5, -5, -5, -5, 31, 8, -2, -5,
-	-5, -5, -5, -5, -5, -5, -5, -5, -5, 32,
-	25, -3, 32, -5, -12, 21, 8, -2, 32, 33,
-	21, -2, -12, 26, -3, -2, 22, -2, 22,
+	19, 20, 8, -5, -5, -5, 33, -5, -2, -5,
+	-5, -5, -5, -5, -5, -5, -5, -5, -5, 13,
+	-12, 21, 8, 25, 34, -3, -5, 34, -5, 21,
+	-2, -12, -2, 34, 35, -2, 22, 26, -3, 22,
+	-2,
 }
 var yyDef = [...]int{
 
-	0, -2, 1, 4, 5, 6, 7, 0, 12, 16,
-	17, 18, 0, 0, 0, 38, 0, 34, 35, 36,
-	37, 3, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 23, 24, 0, 0, 2, 9,
-	10, 11, 13, 14, 15, 19, 20, 21, 22, 8,
-	0, 0, 27, 29, 0, 0, 33, 0, 26, 0,
-	0, 0, 32, 0, 28, 0, 31, 25, 30,
+	0, -2, 1, 4, 5, 6, 7, 11, 15, 16,
+	0, 18, 0, 0, 0, 39, 0, 35, 36, 37,
+	38, 3, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 23, 24, 0, 0, 2, 8,
+	9, 10, 12, 13, 14, 19, 20, 21, 22, 0,
+	0, 0, 33, 0, 26, 0, 29, 34, 17, 0,
+	0, 32, 0, 27, 0, 0, 31, 0, 28, 30,
+	25,
 }
 var yyTok1 = [...]int{
 
@@ -176,13 +184,14 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	31, 32, 3, 3, 33,
+	33, 34, 3, 3, 35,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 	12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-	22, 23, 24, 25, 26, 27, 28, 29, 30,
+	22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+	32,
 }
 var yyTok3 = [...]int{
 	0,
@@ -527,14 +536,14 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:41
+		//line grammer.y:44
 		{
 			tree := &ast.Tree{yyDollar[1].exprs}
 			yylex.(*Lexer).result = tree
 		}
 	case 2:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:47
+		//line grammer.y:50
 		{
 			values := make([]ast.AST, 0, len(yyDollar[3].exprs)+1)
 			values = append(values, yyDollar[1].expr)
@@ -543,41 +552,35 @@ yydefault:
 		}
 	case 3:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line grammer.y:53
+		//line grammer.y:56
 		{
 			yyVAL.exprs = []ast.AST{yyDollar[1].expr}
 		}
 	case 4:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:56
+		//line grammer.y:59
 		{
 			yyVAL.exprs = []ast.AST{yyDollar[1].expr}
 		}
 	case 5:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:62
+		//line grammer.y:65
 		{
 			yyVAL.expr = yyDollar[1].expr
 		}
 	case 6:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:65
+		//line grammer.y:68
 		{
 			yyVAL.expr = yyDollar[1].expr
 		}
 	case 7:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:70
+		//line grammer.y:73
 		{
 			yyVAL.expr = yyDollar[1].expr
 		}
 	case 8:
-		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:73
-		{
-			yyVAL.expr = yyDollar[2].expr
-		}
-	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line grammer.y:76
 		{
@@ -587,7 +590,7 @@ yydefault:
 				Operator: ast.PLUS,
 			}
 		}
-	case 10:
+	case 9:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line grammer.y:83
 		{
@@ -597,7 +600,7 @@ yydefault:
 				Operator: ast.MINUS,
 			}
 		}
-	case 11:
+	case 10:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line grammer.y:90
 		{
@@ -607,13 +610,13 @@ yydefault:
 				Operator: ast.MULTI,
 			}
 		}
-	case 12:
+	case 11:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		//line grammer.y:97
 		{
 			yyVAL.expr = yyDollar[1].expr
 		}
-	case 13:
+	case 12:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line grammer.y:100
 		{
@@ -623,7 +626,7 @@ yydefault:
 				Operator: ast.DIVIDE,
 			}
 		}
-	case 14:
+	case 13:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line grammer.y:107
 		{
@@ -632,7 +635,7 @@ yydefault:
 				Right: yyDollar[3].expr,
 			}
 		}
-	case 15:
+	case 14:
 		yyDollar = yyS[yypt-3 : yypt+1]
 		//line grammer.y:113
 		{
@@ -641,27 +644,36 @@ yydefault:
 				Right: yyDollar[3].expr,
 			}
 		}
-	case 16:
+	case 15:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		//line grammer.y:119
 		{
 			yyVAL.expr = yyDollar[1].expr
 		}
-	case 17:
+	case 16:
 		yyDollar = yyS[yypt-1 : yypt+1]
 		//line grammer.y:122
 		{
 			yyVAL.expr = yyDollar[1].expr
 		}
+	case 17:
+		yyDollar = yyS[yypt-4 : yypt+1]
+		//line grammer.y:125
+		{
+			yyVAL.expr = &ast.AssignmentExpressionNode{
+				ID:          ast.ID(yyDollar[2].token.literal),
+				Initializer: yyDollar[4].expr,
+			}
+		}
 	case 18:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:125
+		//line grammer.y:131
 		{
 			yyVAL.expr = yyDollar[1].ast
 		}
 	case 19:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:130
+		//line grammer.y:136
 		{
 			yyVAL.expr = &ast.RelationalExpressionNode{
 				Left:     yyDollar[1].expr,
@@ -671,7 +683,7 @@ yydefault:
 		}
 	case 20:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:137
+		//line grammer.y:143
 		{
 			yyVAL.expr = &ast.RelationalExpressionNode{
 				Left:     yyDollar[1].expr,
@@ -681,7 +693,7 @@ yydefault:
 		}
 	case 21:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:144
+		//line grammer.y:150
 		{
 			yyVAL.expr = &ast.RelationalExpressionNode{
 				Left:     yyDollar[1].expr,
@@ -691,7 +703,7 @@ yydefault:
 		}
 	case 22:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:151
+		//line grammer.y:157
 		{
 			yyVAL.expr = &ast.RelationalExpressionNode{
 				Left:     yyDollar[1].expr,
@@ -701,23 +713,19 @@ yydefault:
 		}
 	case 23:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line grammer.y:160
+		//line grammer.y:166
 		{
-			yyVAL.expr = &ast.AdditionExpressionNode{
-				Left:     &ast.NumberNode{Value: 0},
-				Right:    yyDollar[2].expr,
-				Operator: ast.MINUS,
-			}
+			yyVAL.expr = &ast.NegativeNode{yyDollar[2].expr}
 		}
 	case 24:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line grammer.y:167
+		//line grammer.y:169
 		{
 			yyVAL.expr = &ast.NotExpressionNode{yyDollar[2].expr}
 		}
 	case 25:
 		yyDollar = yyS[yypt-6 : yypt+1]
-		//line grammer.y:172
+		//line grammer.y:175
 		{
 			yyVAL.expr = &ast.IfExpressionNode{
 				Cond: yyDollar[2].expr,
@@ -726,26 +734,26 @@ yydefault:
 			}
 		}
 	case 26:
-		yyDollar = yyS[yypt-4 : yypt+1]
-		//line grammer.y:181
-		{
-			yyVAL.expr = &ast.FunctionCall{
-				ID:   ast.ID(yyDollar[1].token.literal),
-				Args: yyDollar[3].exprs,
-			}
-		}
-	case 27:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:187
+		//line grammer.y:184
 		{
 			yyVAL.expr = &ast.FunctionCall{
 				ID:   ast.ID(yyDollar[1].token.literal),
 				Args: []ast.AST{},
 			}
 		}
+	case 27:
+		yyDollar = yyS[yypt-4 : yypt+1]
+		//line grammer.y:190
+		{
+			yyVAL.expr = &ast.FunctionCall{
+				ID:   ast.ID(yyDollar[1].token.literal),
+				Args: yyDollar[3].exprs,
+			}
+		}
 	case 28:
 		yyDollar = yyS[yypt-3 : yypt+1]
-		//line grammer.y:195
+		//line grammer.y:198
 		{
 			values := make([]ast.AST, 0, len(yyDollar[3].exprs)+1)
 			values = append(values, yyDollar[1].expr)
@@ -754,13 +762,13 @@ yydefault:
 		}
 	case 29:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:201
+		//line grammer.y:204
 		{
 			yyVAL.exprs = []ast.AST{yyDollar[1].expr}
 		}
 	case 30:
 		yyDollar = yyS[yypt-6 : yypt+1]
-		//line grammer.y:206
+		//line grammer.y:209
 		{
 			yyVAL.expr = &ast.FunctionNode{
 				ID:     ast.ID(yyDollar[2].token.literal),
@@ -770,7 +778,7 @@ yydefault:
 		}
 	case 31:
 		yyDollar = yyS[yypt-5 : yypt+1]
-		//line grammer.y:213
+		//line grammer.y:216
 		{
 			yyVAL.expr = &ast.FunctionNode{
 				ID:     ast.ID(yyDollar[2].token.literal),
@@ -780,7 +788,7 @@ yydefault:
 		}
 	case 32:
 		yyDollar = yyS[yypt-2 : yypt+1]
-		//line grammer.y:222
+		//line grammer.y:225
 		{
 			values := make([]ast.Identifier, 0, len(yyDollar[2].params)+1)
 			values = append(values, ast.Identifier{ast.ID(yyDollar[1].token.literal)})
@@ -789,39 +797,45 @@ yydefault:
 		}
 	case 33:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:228
+		//line grammer.y:231
 		{
 			yyVAL.params = []ast.Identifier{ast.Identifier{ast.ID(yyDollar[1].token.literal)}}
 		}
 	case 34:
-		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:233
+		yyDollar = yyS[yypt-3 : yypt+1]
+		//line grammer.y:236
 		{
-			yyVAL.ast = &ast.BooleanNode{Value: false}
+			yyVAL.ast = yyDollar[2].expr
 		}
 	case 35:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:236
+		//line grammer.y:239
 		{
-			yyVAL.ast = &ast.BooleanNode{Value: true}
+			yyVAL.ast = &ast.BooleanNode{Value: false}
 		}
 	case 36:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:239
+		//line grammer.y:242
+		{
+			yyVAL.ast = &ast.BooleanNode{Value: true}
+		}
+	case 37:
+		yyDollar = yyS[yypt-1 : yypt+1]
+		//line grammer.y:245
 		{
 			lex := yylex.(*Lexer)
 			num := lex.parseFloat(yyDollar[1].token.literal)
 			yyVAL.ast = &ast.NumberNode{Value: num}
 		}
-	case 37:
+	case 38:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:244
+		//line grammer.y:250
 		{
 			yyVAL.ast = &ast.StringNode{yyDollar[1].token.literal}
 		}
-	case 38:
+	case 39:
 		yyDollar = yyS[yypt-1 : yypt+1]
-		//line grammer.y:247
+		//line grammer.y:253
 		{
 			yyVAL.ast = &ast.Identifier{ast.ID(yyDollar[1].token.literal)}
 		}

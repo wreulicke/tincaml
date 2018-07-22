@@ -24,11 +24,14 @@ import "github.com/wreulicke/tincaml/ast"
 %token<token> LESS GREATER LESS_EQUAL GREATER_EQUAL
 %token<token> BEGIN_BLOCK END_BLOCK
 %token<token> LET IF THEN ELSE
-%token<token> COLON
+%token<token> SEMICOLON
 
-%nonassoc COLON
+%nonassoc SEMICOLON
+%right prec_seq
 %right prec_if
-%left EQUALITY NOT_EQUALITY ASSIGN
+%right prec_fun
+%left ASSIGN
+%left EQUALITY NOT_EQUALITY
 %left LESS GREATER LESS_EQUAL GREATER_EQUAL
 %left MINUS PLUS
 %left MULTI DIVIDE
@@ -44,13 +47,13 @@ start: statements {
 }
 
 statements: 
-    statement COLON statements {
+    statement SEMICOLON statements {
         values := make([]ast.AST, 0, len($3) + 1)
         values = append(values, $1)
         values = append(values, $3...)
         $$ = values
     }
-    | statement COLON {
+    | statement SEMICOLON {
         $$ = []ast.AST{$1}
     } 
     | statement {
@@ -69,9 +72,6 @@ statement:
 expression: 
     unary_expression %prec UMINUS {
         $$ = $1
-    }
-    | '(' expression ')' {
-        $$ = $2
     }
     | expression PLUS expression {
         $$ = &ast.AdditionExpressionNode{
@@ -122,6 +122,12 @@ expression:
     | fn_declare {
         $$ = $1
     }
+    | LET ID ASSIGN expression {
+        $$ = &ast.AssignmentExpressionNode{
+            ID: ast.ID($2.literal),
+            Initializer: $4,
+        }
+    }
     | primary_expression {
       $$ = $1
     }
@@ -158,18 +164,15 @@ relational_expr:
 
 unary_expression:
     MINUS expression %prec UMINUS {
-        $$ = &ast.AdditionExpressionNode{
-            Left: &ast.NumberNode{Value: 0},
-            Right: $2,
-            Operator: ast.MINUS,
-        }
+        $$ = &ast.NegativeNode{$2}
     }
     | NOT expression %prec UNOT {
         $$ = &ast.NotExpressionNode{$2}
     }
 
 if_expr:
-    IF expression THEN statements ELSE statements {
+    IF expression THEN statements ELSE statements 
+        %prec prec_if {
         $$ = &ast.IfExpressionNode{
             Cond: $2,
             Then: $4,
@@ -178,17 +181,17 @@ if_expr:
     }
 
 fn_call: 
-    ID '(' arguments ')' {
-        $$ = &ast.FunctionCall{
-            ID: ast.ID($1.literal),
-            Args: $3,
-        }   
-    }
-    | ID '(' ')' {
+    ID '(' ')' {
         $$ = &ast.FunctionCall{
             ID: ast.ID($1.literal),
             Args: []ast.AST{},
         }  
+    }
+    | ID '(' arguments ')' {
+        $$ = &ast.FunctionCall{
+            ID: ast.ID($1.literal),
+            Args: $3,
+        }   
     }
 
 arguments: 
@@ -229,8 +232,11 @@ params:
         $$ = []ast.Identifier{ ast.Identifier{ ast.ID($1.literal) } } 
     }
 
-primary_expression: 
-    FALSE {
+primary_expression:
+    '(' expression ')' {
+        $$ = $2
+    }
+    | FALSE {
         $$ = &ast.BooleanNode{Value: false}
     }
     | TRUE {
