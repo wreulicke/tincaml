@@ -417,7 +417,7 @@ func runeLen(lead byte) int {
 	return 4
 }
 
-// Lex Create Lexer
+// Lex Eats token
 func (l *Lexer) Lex(lval *yySymType) int {
 	if l.error != nil {
 		return -1
