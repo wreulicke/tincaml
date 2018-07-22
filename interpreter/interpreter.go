@@ -14,6 +14,10 @@ type Closure struct {
 	Function *ast.FunctionNode
 }
 
+func (c *Closure) String() string {
+	return fmt.Sprintf("Closure(Function: %v)", c.Function)
+}
+
 func NewEnv() Env {
 	return Env{}
 }
@@ -29,7 +33,6 @@ func (env Env) Clone() Env {
 func Evaluate(tree *ast.Tree) error {
 	env := NewEnv()
 	for _, n := range tree.Body {
-		fmt.Println(n)
 		value, err := EvaluateExpression(n, env)
 		if err != nil {
 			return err
@@ -181,7 +184,7 @@ func evaluateClosure(node *Closure, args []ast.AST, parentEnv Env) (interface{},
 		return nil, err
 	}
 	if f, ok := r.(*ast.FunctionNode); ok {
-		return Closure{
+		return &Closure{
 			Env:      functionEnv,
 			Function: f,
 		}, nil

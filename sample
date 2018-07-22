@@ -18,13 +18,15 @@
 !true
 !false
 let f { 
-  let f n { 
-    if n < 2 then n else f (n - 2) + f (n - 1)
+  let f n {
+    let n = 5 
+    let f n {
+      if n < 2 then n else f (n - 2) + f (n - 1)
+    }
   }
 }
 
-;let fib = f
-fib()(2)
+f()(5)(10)
 
 let b = 2
 let a = b + 3
