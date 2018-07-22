@@ -19,7 +19,7 @@
 !false
 let f { 
   let f n {
-    let n = 5 
+    let n = 5
     let f n {
       if n < 2 then n else f (n - 2) + f (n - 1)
     }

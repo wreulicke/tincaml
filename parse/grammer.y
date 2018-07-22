@@ -16,7 +16,7 @@ import "github.com/wreulicke/tincaml/ast"
 
 %type<> start
 %type<exprs> statements arguments
-%type<expr> statement expression unary_expression fn_call fn_declare if_expr relational_expr
+%type<expr> expression fn_call fn_declare
 %type<ast> primary_expression
 %type<params> params
 %token<token> NUMBER TRUE FALSE STRING ID
@@ -27,6 +27,7 @@ import "github.com/wreulicke/tincaml/ast"
 %token<token> SEMICOLON
 
 %nonassoc SEMICOLON
+%right prec_let
 %right prec_seq
 %right prec_if
 %right prec_fun
@@ -47,32 +48,25 @@ start: statements {
 }
 
 statements: 
-    statement statements {
-        values := make([]ast.AST, 0, len($2) + 1)
-        values = append(values, $1)
-        values = append(values, $2...)
-        $$ = values
-    }
-    | statement {
+    expression %prec prec_seq {
         $$ = []ast.AST{$1}
     } 
-     
-
-statement: 
-    expression {
-        $$ = $1
+    | statements SEMICOLON expression  {
+        values := make([]ast.AST, 0, len($1) + 1)
+        values = append(values, $1...)
+        values = append(values, $3)
+        $$ = values
     }
-    | SEMICOLON expression {
+     
+expression: 
+    '(' expression ')' {
         $$ = $2
     }
-
-
-expression: 
-    unary_expression %prec UMINUS {
-        $$ = $1
+    | MINUS expression %prec UMINUS {
+        $$ = &ast.NegativeNode{$2}
     }
-    | if_expr %prec prec_if {
-        $$ = $1
+    | NOT expression %prec UNOT {
+        $$ = &ast.NotExpressionNode{$2}
     }
     | expression PLUS expression {
         $$ = &ast.AdditionExpressionNode{
@@ -95,45 +89,7 @@ expression:
             Operator: ast.MULTI,
         }
     }
-    | relational_expr {
-        $$ = $1
-    }
-    | expression DIVIDE expression {
-        $$ = &ast.MultiplicativeExpressionNode{
-            Left: $1,
-            Right: $3,
-            Operator: ast.DIVIDE,
-        }
-    }
-    | expression EQUALITY expression {
-        $$ = &ast.EqualityExpressionNode{
-            Left: $1,
-            Right: $3,
-        }
-    }
-    | expression NOT_EQUALITY expression {
-        $$ = &ast.NotEqualityExpressionNode{
-            Left: $1,
-            Right: $3,
-        }
-    }
-    | fn_call {
-        $$ = $1
-    }
-    | fn_declare {
-        $$ = $1
-    }
-    | LET ID ASSIGN expression {
-        $$ = &ast.AssignmentExpressionNode{
-            ID: ast.ID($2.literal),
-            Initializer: $4,
-        }
-    }
-    | primary_expression {
-      $$ = $1
-    }
-
-relational_expr:
+    | 
     expression LESS expression { 
         $$ = &ast.RelationalExpressionNode{
             Left: $1, 
@@ -162,23 +118,49 @@ relational_expr:
             Operator: ast.GREATER_EQUAL,
         } 
     }
-
-unary_expression:
-    MINUS expression %prec UMINUS {
-        $$ = &ast.NegativeNode{$2}
+    | expression DIVIDE expression {
+        $$ = &ast.MultiplicativeExpressionNode{
+            Left: $1,
+            Right: $3,
+            Operator: ast.DIVIDE,
+        }
     }
-    | NOT expression %prec UNOT {
-        $$ = &ast.NotExpressionNode{$2}
+    | expression EQUALITY expression {
+        $$ = &ast.EqualityExpressionNode{
+            Left: $1,
+            Right: $3,
+        }
     }
-
-if_expr:
-    IF expression THEN statements ELSE statements 
+    | expression NOT_EQUALITY expression {
+        $$ = &ast.NotEqualityExpressionNode{
+            Left: $1,
+            Right: $3,
+        }
+    }
+    | fn_call {
+        $$ = $1
+    }
+    | fn_declare {
+        $$ = $1
+    }
+    | LET ID ASSIGN expression 
+        %prec prec_let
+        {
+        $$ = &ast.AssignmentExpressionNode{
+            ID: ast.ID($2.literal),
+            Initializer: $4,
+        }
+    }
+    | IF expression THEN statements ELSE statements 
         %prec prec_if {
         $$ = &ast.IfExpressionNode{
             Cond: $2,
             Then: $4,
             Else: $6,
         }
+    }
+    | primary_expression {
+      $$ = $1
     }
 
 fn_call: 
@@ -192,7 +174,7 @@ fn_call:
         $$ = &ast.FunctionCall{
             Function: $1,
             Args: $3,
-        }   
+        }
     }
 
 arguments: 
@@ -234,10 +216,7 @@ params:
     }
 
 primary_expression:
-    '(' expression ')' {
-        $$ = $2
-    }
-    | FALSE {
+    FALSE {
         $$ = &ast.BooleanNode{Value: false}
     }
     | TRUE {

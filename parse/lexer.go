@@ -282,7 +282,10 @@ retry:
 		}
 		return NOT
 	case next == ';':
-		l.scanWhitespace()
+		if l.Peek() == '\n' {
+			l.Next()
+			return SEMICOLON
+		}
 		return SEMICOLON
 	case next == '-':
 		return MINUS
@@ -301,6 +304,9 @@ retry:
 		}
 		return GREATER
 	case next == '{':
+		if l.Peek() == '\n' {
+			l.Next()
+		}
 		return BEGIN_BLOCK
 	case next == '}':
 		return END_BLOCK
@@ -314,6 +320,13 @@ retry:
 		return int(next)
 	case next == ')':
 		return int(next)
+	case next == '\n':
+		l.scanWhitespace()
+		if l.Peek() == '}' {
+			l.Next()
+			return END_BLOCK
+		}
+		return SEMICOLON
 	default:
 		if unicode.IsSpace(next) {
 			l.scanWhitespace()
