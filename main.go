@@ -24,6 +24,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	defer f.Close()
+
 	n, err := parse.Parse(bufio.NewReader(f))
 	if err != nil {
 		fmt.Println(err)
