@@ -26,17 +26,17 @@ import "github.com/wreulicke/tincaml/ast"
 %token<token> LET IF THEN ELSE
 %token<token> SEMICOLON
 
-%nonassoc SEMICOLON
 %right prec_let
 %right prec_seq
+%right SEMICOLON
 %right prec_if
 %right prec_fun
-%left ASSIGN
-%left EQUALITY NOT_EQUALITY
+%left ASSIGN EQUALITY NOT_EQUALITY
 %left LESS GREATER LESS_EQUAL GREATER_EQUAL
-%left MINUS PLUS
+%left PLUS MINUS
 %left MULTI DIVIDE
-%right UMINUS UNOT
+%right prec_unary_minus
+%left prec_app
 
 %start start
 
@@ -48,24 +48,24 @@ start: statements {
 }
 
 statements: 
-    expression %prec prec_seq {
+    expression {
         $$ = []ast.AST{$1}
     } 
     | statements SEMICOLON expression  {
-        values := make([]ast.AST, 0, len($1) + 1)
-        values = append(values, $1...)
-        values = append(values, $3)
-        $$ = values
+        $$ = append($1, $3)
     }
      
 expression: 
-    '(' expression ')' {
-        $$ = $2
+    primary_expression {
+      $$ = $1
     }
-    | MINUS expression %prec UMINUS {
+    | '(' expression ')' {
+      $$ = $2
+    }
+    | MINUS expression %prec prec_unary_minus {
         $$ = &ast.NegativeNode{$2}
     }
-    | NOT expression %prec UNOT {
+    | NOT expression %prec prec_unary_minus {
         $$ = &ast.NotExpressionNode{$2}
     }
     | expression PLUS expression {
@@ -89,8 +89,7 @@ expression:
             Operator: ast.MULTI,
         }
     }
-    | 
-    expression LESS expression { 
+    | expression LESS expression { 
         $$ = &ast.RelationalExpressionNode{
             Left: $1, 
             Right: $3,
@@ -143,34 +142,34 @@ expression:
     | fn_declare {
         $$ = $1
     }
-    | LET ID ASSIGN expression 
-        %prec prec_let
-        {
+    | LET ID ASSIGN expression %prec prec_let {
         $$ = &ast.AssignmentExpressionNode{
             ID: ast.ID($2.literal),
             Initializer: $4,
         }
     }
-    | IF expression THEN statements ELSE statements 
-        %prec prec_if {
+    | IF expression THEN statements ELSE statements %prec prec_if {
         $$ = &ast.IfExpressionNode{
             Cond: $2,
             Then: $4,
             Else: $6,
         }
     }
-    | primary_expression {
-      $$ = $1
-    }
 
 fn_call: 
-    expression '(' ')' {
+    expression '(' ')' %prec prec_fun {
         $$ = &ast.FunctionCall{
             Function: $1,
             Args: []ast.AST{},
         }  
     }
-    | expression '(' arguments ')' {
+    | expression '(' expression ')' %prec prec_fun {
+        $$ = &ast.FunctionCall{
+            Function: $1,
+            Args: []ast.AST{$3},
+        }
+    }
+    | expression '(' arguments ')' %prec prec_fun {
         $$ = &ast.FunctionCall{
             Function: $1,
             Args: $3,
@@ -178,14 +177,11 @@ fn_call:
     }
 
 arguments: 
-    expression ',' arguments {  
-        values := make([]ast.AST, 0, len($3) + 1)
-        values = append(values, $1)
-        values = append(values, $3...)
-        $$ = values 
+    arguments ',' expression {  
+        $$ = append($1, $3) 
     }
-    | expression { 
-        $$ = []ast.AST{ $1 } 
+    | expression ',' expression {
+        $$ = []ast.AST{$1, $3} 
     }
 
 fn_declare: 
@@ -205,11 +201,8 @@ fn_declare:
     }
 
 params: 
-    ID params {
-        values := make([]ast.Identifier, 0, len($2) + 1)
-        values = append(values, ast.Identifier{ ast.ID($1.literal) })
-        values = append(values, $2...)
-        $$ = values
+    params ID {
+        $$ = append($1, ast.Identifier{ ast.ID($2.literal) })
     }
     | ID { 
         $$ = []ast.Identifier{ ast.Identifier{ ast.ID($1.literal) } } 
