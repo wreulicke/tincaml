@@ -17,11 +17,13 @@
 "吉幾三" != "吉野家"
 !true
 !false
+let c = 1
 let f { 
+  let a = 2
   let f n b {
     let n = 5
     let f n {
-      if n < 2 then n else f (n - 2) + f (n - 1)
+      if n < 2 then n else f (n - a) + f (n - c)
     }
   }
 }
